@@ -1,1 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COLLECTIVE // NOUNS.DB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a0d;
+    --bg-alt: #101013;
+    --panel: #16161a;
+    --yellow: #fcee0a;
+    --cyan: #01e5e5;
+    --magenta: #ff2f6e;
+    --text: #e9e9e2;
+    --muted: #86868f;
+    --line: #2a2a30;
+  }
+  :root[data-theme="light"]{
+    --bg:#0a0a0d; --bg-alt:#101013; --panel:#16161a; --text:#e9e9e2; --muted:#86868f; --line:#2a2a30;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); overflow-x:hidden; }
+  body{
+    font-family: 'Rajdhani', sans-serif;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(1,229,229,0.06), transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(255,47,110,0.07), transparent 55%),
+      var(--bg);
+  }
+  h1,h2,h3,.disp{ font-family:'Chakra Petch', sans-serif; }
 
+  ::selection{ background:var(--yellow); color:#0a0a0d; }
+
+  /* ---------- scanline / noise overlay ---------- */
+  .scan-overlay{
+    position:fixed; inset:0; pointer-events:none; z-index:9999; mix-blend-mode:overlay; opacity:.5;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 3px);
+  }
+  .vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:9998;
+    box-shadow: inset 0 0 12vw rgba(0,0,0,0.65);
+  }
+
+  /* ================= SPLASH ================= */
+  #splash{
+    position:fixed; inset:0; z-index:200; background:#000;
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    cursor:pointer; transition: clip-path .9s cubic-bezier(.77,0,.18,1), opacity .7s ease .1s;
+    clip-path: inset(0 0 0 0);
+  }
+  #splash.leaving{ clip-path: inset(0 0 100% 0); opacity:0; }
+  #splash.leaving ~ * { }
+  .grid-bg{
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(1,229,229,0.09) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(1,229,229,0.09) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    animation: gridpan 18s linear infinite;
+    opacity:.6;
+  }
+  @keyframes gridpan{ from{ background-position:0 0,0 0;} to{ background-position:48px 96px, 96px 48px; } }
+
+  .presented{
+    font-family:'Chakra Petch', sans-serif;
+    font-size: clamp(12px,1.8vw,16px);
+    letter-spacing:.6em;
+    color:var(--muted);
+    margin:0 0 18px 2px;
+    opacity:0;
+    animation: fadein .6s ease .3s forwards;
+  }
+  @keyframes fadein{ to{ opacity:1; } }
+
+  .glitchname{
+    position:relative;
+    font-family:'Chakra Petch', sans-serif;
+    font-weight:700; font-style:italic;
+    font-size: clamp(34px, 8vw, 92px);
+    line-height:.95;
+    color: var(--yellow);
+    text-transform:uppercase;
+    letter-spacing: .01em;
+    opacity:0;
+    animation: nameIn .15s steps(2) .75s forwards, flicker 3.4s linear 1.4s infinite;
+  }
+  @keyframes nameIn{ to{ opacity:1; } }
+  .glitchname::before, .glitchname::after{
+    content: attr(data-text);
+    position:absolute; left:0; top:0; width:100%; height:100%;
+    background:transparent;
+  }
+  .glitchname::before{
+    color: var(--cyan);
+    clip-path: inset(0 0 55% 0);
+    animation: glitchTop 3.6s infinite linear .9s;
+  }
+  .glitchname::after{
+    color: var(--magenta);
+    clip-path: inset(55% 0 0 0);
+    animation: glitchBot 3.6s infinite linear .9s;
+  }
+  @keyframes glitchTop{
+    0%,88%,100%{ transform:translate(0,0); opacity:0; }
+    89%{ transform:translate(-3px,-1px); opacity:.8; }
+    90.5%{ transform:translate(4px,1px); opacity:.8; }
+    92%{ transform:translate(-2px,0); opacity:0; }
+  }
+  @keyframes glitchBot{
+    0%,90%,100%{ transform:translate(0,0); opacity:0; }
+    91%{ transform:translate(3px,1px); opacity:.8; }
+    92.5%{ transform:translate(-4px,-1px); opacity:.8; }
+    94%{ transform:translate(2px,0); opacity:0; }
+  }
+  @keyframes flicker{
+    0%,3%,5%,100%{ text-shadow: 0 0 18px rgba(252,238,10,.55), 0 0 2px rgba(252,238,10,.9); }
+    4%{ opacity:.72; text-shadow:none; }
+  }
+
+  .splash-sub{
+    margin-top:22px; display:flex; align-items:center; gap:14px;
+    font-size:13px; letter-spacing:.35em; color:var(--muted);
+    opacity:0; animation: fadein .6s ease 2.1s forwards;
+  }
+  .splash-sub .dot{ width:7px; height:7px; background:var(--cyan); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:.25;} 50%{opacity:1;} }
+
+  .hazard{
+    position:absolute; left:0; right:0; height:10px;
+    background: repeating-linear-gradient(135deg, var(--yellow) 0 14px, #0a0a0d 14px 28px);
+    opacity:.85;
+  }
+  .hazard.top{ top:0; } .hazard.bottom{ bottom:0; }
+
+  /* ================= MAIN ================= */
+  #main{ position:relative; min-height:100vh; padding: 64px 6vw 100px; opacity:0; }
+  #main.show{ animation: mainIn .8s ease forwards; }
+  @keyframes mainIn{ to{ opacity:1; } }
+
+  header.top{
+    display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px;
+    border-bottom:1px solid var(--line); padding-bottom:22px; margin-bottom:44px;
+  }
+  .brand{ display:flex; flex-direction:column; gap:6px; }
+  .brand .tag{ font-size:12px; letter-spacing:.4em; color:var(--cyan); }
+  .brand h1{
+    margin:0; font-size: clamp(30px,5vw,54px); font-weight:700; font-style:italic;
+    text-transform:uppercase; letter-spacing:.01em; color:var(--text);
+  }
+  .brand h1 span{ color:var(--yellow); }
+  .credit{ text-align:right; font-size:13px; letter-spacing:.15em; color:var(--muted); line-height:1.7; }
+  .credit b{ color:var(--text); font-weight:600; }
+
+  .counter{
+    font-family:'Chakra Petch',sans-serif; font-size:13px; letter-spacing:.2em; color:var(--muted);
+    display:flex; gap:10px; align-items:center;
+  }
+  .counter b{ color:var(--yellow); }
+
+  .grid{
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap:18px;
+  }
+
+  .card{
+    position:relative; background:var(--panel); border:1px solid var(--line);
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+    padding:20px 18px 18px; cursor:pointer; overflow:hidden;
+    transition: transform .25s ease, border-color .25s ease, background .25s ease;
+  }
+  .card::before{
+    content:''; position:absolute; left:0; top:0; width:3px; height:100%;
+    background:var(--muted); transition: background .25s ease, box-shadow .25s ease;
+  }
+  .card:hover{ transform: translateY(-3px); border-color:var(--cyan); background:#18181d; }
+  .card:hover::before{ background:var(--cyan); box-shadow:0 0 12px var(--cyan); }
+  .card:focus-visible{ outline:2px solid var(--yellow); outline-offset:2px; }
+
+  .card .idx{ font-family:'Chakra Petch',sans-serif; font-size:12px; color:var(--muted); letter-spacing:.15em; }
+  .card .noun{
+    margin:10px 0 4px; font-family:'Chakra Petch',sans-serif; font-weight:600; font-size:20px;
+    color:var(--text); text-transform:uppercase; letter-spacing:.02em;
+  }
+  .card .species{ font-size:14px; color:var(--muted); }
+  .card .expand-hint{
+    margin-top:14px; font-size:11px; letter-spacing:.2em; color:var(--yellow); opacity:0;
+    transform:translateY(4px); transition: all .2s ease;
+  }
+  .card:hover .expand-hint{ opacity:1; transform:translateY(0); }
+
+  /* ============ MODAL / EXPAND ============ */
+  #modal-layer{
+    position:fixed; inset:0; z-index:300; display:none;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  #modal-layer.open{ display:flex; }
+  .backdrop{
+    position:absolute; inset:0; background:rgba(6,6,8,0.82); backdrop-filter: blur(3px);
+    opacity:0; transition: opacity .25s ease;
+  }
+  #modal-layer.open .backdrop{ opacity:1; }
+
+  .modal{
+    position:relative; width:min(640px, 100%); background:var(--panel);
+    border:1px solid var(--cyan);
+    clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 28px 100%, 0 calc(100% - 28px));
+    padding:38px 36px 32px; transform: scale(.85); opacity:0;
+    box-shadow: 0 0 0 rgba(1,229,229,0);
+  }
+  #modal-layer.open .modal{
+    animation: modalIn .38s cubic-bezier(.2,1.4,.4,1) forwards, edgeGlow 2.4s ease-in-out .4s infinite;
+  }
+  @keyframes modalIn{ to{ transform:scale(1); opacity:1; } }
+  @keyframes edgeGlow{
+    0%,100%{ box-shadow: 0 0 24px rgba(1,229,229,.18); }
+    50%{ box-shadow: 0 0 34px rgba(1,229,229,.32); }
+  }
+  .modal .m-hazard{
+    position:absolute; top:0; left:0; right:0; height:6px;
+    background: repeating-linear-gradient(135deg, var(--yellow) 0 10px, transparent 10px 20px);
+  }
+  .modal .m-idx{ font-size:12px; letter-spacing:.3em; color:var(--muted); }
+  .modal h2{
+    margin:12px 0 2px; font-size: clamp(26px,4vw,38px); font-weight:700; font-style:italic;
+    color:var(--yellow); text-transform:uppercase;
+  }
+  .modal .m-species{ color:var(--cyan); font-size:15px; letter-spacing:.08em; margin-bottom:18px; display:block; }
+  .modal .m-body{ font-size:17px; line-height:1.65; color:var(--text); }
+  .modal .m-body b{ color:var(--yellow); font-weight:600; }
+  .modal .m-example{
+    margin-top:18px; padding:14px 16px; border-left:2px solid var(--magenta);
+    background:rgba(255,47,110,.06); font-size:14px; color:var(--muted); font-style:italic;
+  }
+  .m-close{
+    position:absolute; top:16px; right:20px; background:none; border:none; color:var(--muted);
+    font-family:'Chakra Petch',sans-serif; font-size:13px; letter-spacing:.2em; cursor:pointer;
+    padding:6px 8px; transition:color .2s ease;
+  }
+  .m-close:hover{ color:var(--magenta); }
+
+  footer{
+    margin-top:70px; padding-top:24px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    font-size:12px; letter-spacing:.2em; color:var(--muted);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  }
+
+  @media (max-width:520px){
+    header.top{ flex-direction:column; align-items:flex-start; }
+    .credit{ text-align:left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scan-overlay"></div>
+<div class="vignette"></div>
+
+<!-- ============ SPLASH ============ -->
+<div id="splash" role="button" tabindex="0" aria-label="Enter site">
+  <div class="hazard top"></div>
+  <div class="grid-bg"></div>
+  <div class="presented">PRESENTED&nbsp;BY</div>
+  <div class="glitchname" data-text="HARDIK CHAUDHARY">HARDIK CHAUDHARY</div>
+  <div class="splash-sub"><span class="dot"></span> CLICK OR PRESS ANY KEY TO JACK IN</div>
+  <div class="hazard bottom"></div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<main id="main">
+  <header class="top">
+    <div class="brand">
+      <span class="tag">NOUN.DATABASE // ANIMALIA</span>
+      <h1>COLLECTIVE<span>_</span>NOUNS</h1>
+    </div>
+    <div class="credit">CURATED ARCHIVE<br><b>Presented by Hardik Chaudhary</b></div>
+  </header>
+
+  <div class="counter" style="margin-bottom:22px;">ENTRIES LOADED <b id="loadedCount">00</b> / 20</div>
+
+  <section class="grid" id="grid"></section>
+
+  <footer>
+    <span>NOUNS.DB v1.0</span>
+    <span>SELECT AN ENTRY TO EXPAND</span>
+  </footer>
+</main>
+
+<!-- ============ MODAL ============ -->
+<div id="modal-layer" aria-hidden="true">
+  <div class="backdrop" id="backdrop"></div>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="m-hazard"></div>
+    <button class="m-close" id="mClose">[ ESC // CLOSE ]</button>
+    <div class="m-idx" id="mIdx">ENTRY 00</div>
+    <h2 id="mNoun">—</h2>
+    <span class="m-species" id="mSpecies">—</span>
+    <div class="m-body" id="mBody"></div>
+    <div class="m-example" id="mExample"></div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  {noun:"Pride", species:"Lions", ex:"A pride of lions rested in the shade after the hunt."},
+  {noun:"Murder", species:"Crows", ex:"A murder of crows gathered on the wire at dusk."},
+  {noun:"Parliament", species:"Owls", ex:"A parliament of owls watched silently from the rafters."},
+  {noun:"Flamboyance", species:"Flamingos", ex:"A flamboyance of flamingos lit up the shoreline in pink."},
+  {noun:"Troop", species:"Monkeys", ex:"A troop of monkeys swung noisily through the canopy."},
+  {noun:"Pod", species:"Dolphins", ex:"A pod of dolphins surfaced beside the boat."},
+  {noun:"Herd", species:"Elephants", ex:"A herd of elephants crossed the dry riverbed at sunset."},
+  {noun:"Colony", species:"Ants", ex:"A colony of ants rebuilt their tunnel after the storm."},
+  {noun:"Swarm", species:"Bees", ex:"A swarm of bees moved as one dark cloud over the field."},
+  {noun:"Pack", species:"Wolves", ex:"A pack of wolves howled together under the full moon."},
+  {noun:"Gaggle", species:"Geese", ex:"A gaggle of geese blocked the entire footpath."},
+  {noun:"School", species:"Fish", ex:"A school of fish scattered as the shadow passed overhead."},
+  {noun:"Crash", species:"Rhinos", ex:"A crash of rhinos grazed at the edge of the reserve."},
+  {noun:"Tower", species:"Giraffes", ex:"A tower of giraffes stood tall against the horizon."},
+  {noun:"Mob", species:"Kangaroos", ex:"A mob of kangaroos bounded across the open plain."},
+  {noun:"Shrewdness", species:"Apes", ex:"A shrewdness of apes studied the newcomers with caution."},
+  {noun:"Bloat", species:"Hippos", ex:"A bloat of hippos submerged as the jeep drew near."},
+  {noun:"Cackle", species:"Hyenas", ex:"A cackle of hyenas circled the leftover carcass at night."},
+  {noun:"Charm", species:"Hummingbirds", ex:"A charm of hummingbirds hovered around the feeder."},
+  {noun:"Unkindness", species:"Ravens", ex:"An unkindness of ravens perched atop the old billboard."}
+];
+
+const grid = document.getElementById('grid');
+DATA.forEach((d,i)=>{
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.tabIndex = 0;
+  card.setAttribute('role','button');
+  card.dataset.idx = i;
+  card.innerHTML = `
+    <div class="idx">ENTRY ${String(i+1).padStart(2,'0')}</div>
+    <div class="noun">${d.noun}</div>
+    <div class="species">of ${d.species}</div>
+    <div class="expand-hint">// EXPAND ENTRY</div>
+  `;
+  grid.appendChild(card);
+});
+
+function openModal(i){
+  const d = DATA[i];
+  document.getElementById('mIdx').textContent = `ENTRY ${String(i+1).padStart(2,'0')} // 20`;
+  document.getElementById('mNoun').textContent = `A ${d.noun} of ${d.species}`;
+  document.getElementById('mSpecies').textContent = `COLLECTIVE NOUN — ${d.species.toUpperCase()}`;
+  document.getElementById('mBody').innerHTML = `The correct term for a group of <b>${d.species.toLowerCase()}</b> is a <b>${d.noun.toLowerCase()}</b>.`;
+  document.getElementById('mExample').textContent = d.ex;
+  const layer = document.getElementById('modal-layer');
+  layer.classList.add('open');
+  layer.setAttribute('aria-hidden','false');
+}
+function closeModal(){
+  const layer = document.getElementById('modal-layer');
+  layer.classList.remove('open');
+  layer.setAttribute('aria-hidden','true');
+}
+
+grid.addEventListener('click', e=>{
+  const card = e.target.closest('.card');
+  if(card) openModal(Number(card.dataset.idx));
+});
+grid.addEventListener('keydown', e=>{
+  if(e.key === 'Enter' || e.key === ' '){
+    const card = e.target.closest('.card');
+    if(card){ e.preventDefault(); openModal(Number(card.dataset.idx)); }
+  }
+});
+document.getElementById('backdrop').addEventListener('click', closeModal);
+document.getElementById('mClose').addEventListener('click', closeModal);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+// counter tick-up
+let count = 0;
+const counterEl = document.getElementById('loadedCount');
+const counterTimer = setInterval(()=>{
+  count++;
+  counterEl.textContent = String(count).padStart(2,'0');
+  if(count>=20) clearInterval(counterTimer);
+}, 45);
+
+// splash -> main
+function enterSite(){
+  const splash = document.getElementById('splash');
+  if(splash.classList.contains('leaving')) return;
+  splash.classList.add('leaving');
+  document.getElementById('main').classList.add('show');
+  setTimeout(()=>{ splash.style.display='none'; }, 950);
+}
+const splashEl = document.getElementById('splash');
+splashEl.addEventListener('click', enterSite);
+splashEl.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') enterSite(); });
+window.addEventListener('keydown', function firstKey(e){
+  if(!splashEl.classList.contains('leaving')){ enterSite(); }
+  window.removeEventListener('keydown', firstKey);
+});
+</script>
+</body>
+</html>
